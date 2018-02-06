@@ -9,6 +9,7 @@ date_string = str(now)[:4] + "-" + str(now)[5:7] + "-" + str(now)[8:10]
 stock_list = ["GOOG","AMZN","NVR","PCLN","MKL","WTM","ISRG","AZO","CABO","GHC"]
 if len(sys.argv) > 2:
 	stock_list = sys.argv[2:]
+Base_Capital = 50000
 Share_num = 50
 share_list = [Share_num]*len(stock_list)
 # Get json object with the intraday data and another with  the call's metadata
@@ -22,8 +23,11 @@ profit = 0
 sales = 0
 trade_cost = 0.005
 fees = 0
+total_earnings = 0
 for i in range(len(stock_list)):
+	earnings = 0
 	stock = 0
+	n_shares = 0
 	if sys.argv[1] == "today":
 		print("Data for today")
 		data, meta_data = ts.get_intraday(stock_list[i],interval='1min',outputsize='full')
@@ -33,9 +37,8 @@ for i in range(len(stock_list)):
 	else:
 		print("Data for last hour")
 		data, meta_data = ts.get_intraday(stock_list[i],interval='1min')
-	n_shares = share_list[i]
 	share_price = data.iloc[1,2]
-	total_price += n_shares*share_price
+	total_price += (Base_Capital // share_price) * share_price
 	for index, row in data.iterrows():
 		if date_string not in index:
 			continue
@@ -62,11 +65,13 @@ for i in range(len(stock_list)):
 				if stock == 0:
 					stock = 1
 					sales += 1
+					n_shares = (Base_Capital + earnings) // close_cost
 					earnings -= max(n_shares*(trade_cost),1)
 					fees += max(n_shares*(trade_cost),1)
 				else:
 					earnings += n_shares*(close_cost - open_cost)
-print("Earnings without fee:", earnings + fees)
-print("Profit without fee:", (earnings + fees)/total_price)
-print("Profit with fee:", earnings/total_price)
-print("Transactions:", Share_num*sales)
+	total_earnings += earnings
+print("Earnings without fee:", total_earnings + fees)
+print("Profit without fee:", (total_earnings + fees)/total_price)
+print("Profit with fee:", total_earnings/total_price)
+print("Transactions (approx):", Share_num*sales)
