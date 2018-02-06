@@ -27,9 +27,6 @@ for i in range(len(stock_list)):
 	if sys.argv[1] == "today":
 		print("Data for today")
 		data, meta_data = ts.get_intraday(stock_list[i],interval='1min',outputsize='full')
-		for index, row in data.iterrows():
-			if date_string not in index:
-				data.drop(index)
 	elif sys.argv[1] == "1":
 		print("Data for last two weeks")
 		data, meta_data = ts.get_intraday(stock_list[i],interval='1min',outputsize='full')
@@ -40,6 +37,8 @@ for i in range(len(stock_list)):
 	share_price = data.iloc[1,2]
 	total_price += n_shares*share_price
 	for index, row in data.iterrows():
+		if date_string not in index:
+			continue
 		if stock:
 			earnings += n_shares*(close_cost - row["1. open"])
 		if "16:00:00" in index:
